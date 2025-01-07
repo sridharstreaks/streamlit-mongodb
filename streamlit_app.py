@@ -1,69 +1,88 @@
-import streamlit as st
+import os
 import libtorrent as lt
 import time
-import os
-# Set up a directory for temporary storage
-temp_dir = "temp_video"
-os.makedirs(temp_dir, exist_ok=True)
-# Initialize session state for libtorrent session and handle
-if "torrent_session" not in st.session_state:
-    st.session_state.torrent_session = lt.session()
-    st.session_state.torrent_handle = None
-def start_torrent_stream(magnet_link, save_path):
-    """Start streaming a torrent video."""
-    ses = st.session_state.torrent_session
-    ses.apply_settings({'listen_interfaces': '0.0.0.0:6881,[::]:6881'})
-    params = lt.add_torrent_params()
-    params.save_path = save_path
-    params.storage_mode = lt.storage_mode_t(2)
-    params.url = magnet_link
-    params.flags |= lt.torrent_flags.sequential_download  # Enable sequential download
-    handle = ses.add_torrent(params)
-    st.session_state.torrent_handle = handle
-    st.write("Downloading Metadata...")
-    while not handle.has_metadata():
-        time.sleep(1)
-    st.write("Metadata Imported, Starting Stream...")
-    # Set priorities for the first few pieces (e.g., first 10%)
-    torrent_info = handle.torrent_file()
-    for i in range(min(10, torrent_info.num_pieces())):
-        handle.piece_priority(i, 7)  # 7 = highest priority
-def monitor_and_stream_video():
-    """Monitor download progress and stream video."""
-    handle = st.session_state.torrent_handle
-    if handle is None:
-        st.warning("No active stream. Start a new session.")
-        return
-    # Get the torrent info and save path
-    torrent_info = handle.torrent_file()
-    video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
-    while not os.path.exists(video_path) or not os.path.isfile(video_path):
-        s = handle.status()
-        st.write(
-            f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
-            f"peers: {s.num_peers})"
-        )
-        time.sleep(5)
-    # Check if sufficient pieces are downloaded for streaming
-    piece_length = torrent_info.piece_length()
-    downloaded_bytes = handle.status().total_done
-    buffer_threshold = piece_length * 10  # Require at least 10 pieces for buffer
-    if downloaded_bytes >= buffer_threshold:
-        st.video(video_path)
+import tempfile
+import streamlit as st
+
+def add_torrent(handle, magnet_or_file, save_path):
+    # Create a torrent session
+    session = lt.session()
+    session.listen_on(6881, 6891)
+    params = {
+        'save_path': save_path,
+        'storage_mode': lt.storage_mode_t.storage_mode_sparse,
+        'paused': False,
+        'auto_managed': True,
+        'duplicate_is_error': True,
+    }
+
+    # Handle magnet links or torrent files
+    if magnet_or_file.startswith("magnet:"):
+        params['url'] = magnet_or_file
     else:
-        st.warning("Buffering... Please wait for more data to download.")
-# Streamlit UI
-st.title("Stream Torrent Video")
-magnet_link = st.text_input("Enter Magnet Link:")
-if magnet_link:
-    if st.button("Start Stream"):
-        st.write("Initializing stream...")
-        start_torrent_stream(magnet_link, temp_dir)
-if st.session_state.torrent_handle:
-    if st.button("Stream Video"):
-        monitor_and_stream_video()
-# Optional cleanup button to remove temporary files
-if st.button("Clear Temporary Files"):
-    for file in os.listdir(temp_dir):
-        os.remove(os.path.join(temp_dir, file))
-    st.success("Temporary files cleared.")
+        info = lt.torrent_info(magnet_or_file)
+        params['ti'] = info
+
+    return session.add_torrent(params), session
+
+
+def download_torrent(torrent_handle, session, status_callback=None, sequential_download=False):
+    torrent_handle.set_sequential_download(sequential_download)
+
+    while not torrent_handle.status().is_seeding:
+        status = torrent_handle.status()
+        if status_callback:
+            status_callback(status)
+        time.sleep(1)
+
+
+def stream_video(torrent_handle, save_path):
+    # Wait until sufficient pieces are downloaded
+    while True:
+        status = torrent_handle.status()
+        if status.progress > 0.05:  # Begin streaming after 5% completion
+            video_file = os.path.join(save_path, torrent_handle.name())
+            st.video(video_file)
+            break
+        time.sleep(1)
+
+
+def main():
+    st.title("Torrent Video Streamer and Downloader")
+    
+    input_type = st.radio("Select Input Type:", ["Magnet Link", "Torrent File"])
+    save_path = st.text_input("Enter Save Path:", value=tempfile.gettempdir())
+    magnet_or_file = None
+
+    if input_type == "Magnet Link":
+        magnet_or_file = st.text_input("Enter Magnet Link:")
+    else:
+        torrent_file = st.file_uploader("Upload Torrent File:")
+        if torrent_file:
+            magnet_or_file = torrent_file.name
+            with open(magnet_or_file, "wb") as f:
+                f.write(torrent_file.getvalue())
+
+    mode = st.radio("Select Mode:", ["Download", "Stream"])
+    if st.button("Start"):
+        if magnet_or_file:
+            torrent_handle, session = add_torrent(magnet_or_file, save_path)
+            
+            def show_status(status):
+                st.write(f"Filename: {status.name}")
+                st.write(f"Download Speed: {status.download_rate / 1000:.2f} KB/s")
+                st.write(f"Upload Speed: {status.upload_rate / 1000:.2f} KB/s")
+                st.write(f"Peers: {status.num_peers}")
+                st.write(f"Seeds: {status.num_seeds}")
+                st.write(f"Progress: {status.progress * 100:.2f}%")
+                st.write(f"Total Size: {status.total_wanted / (1024 ** 2):.2f} MB")
+                st.write("---")
+
+            if mode == "Download":
+                download_torrent(torrent_handle, session, status_callback=show_status)
+                st.success("Download completed!")
+            elif mode == "Stream":
+                download_torrent(torrent_handle, session, status_callback=show_status, sequential_download=True)
+                stream_video(torrent_handle, save_path)
+        else:
+            st.error("Please provide a valid input.")
