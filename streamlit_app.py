@@ -4,10 +4,12 @@ import os
 import tempfile
 import streamlit as st
 
+# Create a single session object
+ses = lt.session()
+ses.listen_on(6881, 6891)
+
 # Function to handle torrent downloads
-def download_torrent(torrent_info, save_path):
-    ses = lt.session()
-    ses.listen_on(6881, 6891)
+def download_torrent(ses, torrent_info, save_path):  # Accept session as argument
     params = {
         'save_path': save_path,
         'storage_mode': lt.storage_mode_t(2),
@@ -36,10 +38,7 @@ def download_torrent(torrent_info, save_path):
     st.text("Download complete")
 
 # Function to handle torrent streaming
-def stream_torrent(torrent_info, save_path):
-    ses = lt.session()
-    ses.listen_on(6881, 6891)
-
+def stream_torrent(ses, torrent_info, save_path):  # Accept session as argument
     params = {
         'save_path': save_path,
         'storage_mode': lt.storage_mode_t(2),
@@ -87,7 +86,6 @@ def stream_torrent(torrent_info, save_path):
             st.video(file_path)
         time.sleep(1)
 
-    
 # Streamlit app
 st.title('Torrent Stream/Download App')
 
@@ -104,11 +102,13 @@ if magnet_link:
         'save_path': tempfile.mkdtemp(),  # Create temporary save path
         'storage_mode': lt.storage_mode_t(2)
     }
-    h = lt.add_magnet_uri(lt.session(), magnet_link, params)
+    h = ses.add_torrent(params, magnet_link)  # Use existing session here
     
     # Wait for metadata to be available
     while not h.has_metadata():
         time.sleep(0.1)
+        s = h.status()
+        st.text(f"Retrieving metadata: {s.name}")
     
     torrent_info = h.get_torrent_info()
 
@@ -118,9 +118,9 @@ option = st.radio("Choose an option:", ('Download', 'Stream'))
 if option == 'Download' and uploaded_file is not None or magnet_link:
     save_path = st.text_input("Enter save path:", tempfile.gettempdir())
     if st.button('Start Download'):
-        download_torrent(torrent_info, save_path)
+        download_torrent(ses, torrent_info, save_path)  # Pass session object
 
 elif option == 'Stream' and uploaded_file is not None or magnet_link:
     if st.button('Start Streaming'):
         save_path = tempfile.mkdtemp()  # Create temporary save path for streaming
-        stream_torrent(torrent_info, save_path)
+        stream_torrent(ses, torrent_info, save_path)  # Pass session object
