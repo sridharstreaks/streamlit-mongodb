@@ -2,3 +2,4 @@ libtorrent
 streamlit-player
 streamlit
 flask
+nodejs
