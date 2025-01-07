@@ -1,3 +1,4 @@
-libtorrent
+#libtorrent
 streamlit-player
 streamlit
+streamlit python-aiotorrent[stream-support]
