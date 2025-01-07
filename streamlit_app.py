@@ -4,7 +4,7 @@ import time
 import tempfile
 import streamlit as st
 
-def add_torrent(handle, magnet_or_file, save_path):
+def add_torrent(magnet_or_file, save_path):
     # Create a torrent session
     session = lt.session()
     session.listen_on(6881, 6891)
@@ -49,9 +49,12 @@ def stream_video(torrent_handle, save_path):
 
 def main():
     st.title("Torrent Video Streamer and Downloader")
-    
+
+    # Automatically create a temporary directory for storage
+    save_path = tempfile.mkdtemp()
+    st.write(f"Temporary directory created: {save_path}")
+
     input_type = st.radio("Select Input Type:", ["Magnet Link", "Torrent File"])
-    save_path = st.text_input("Enter Save Path:", value=tempfile.gettempdir())
     magnet_or_file = None
 
     if input_type == "Magnet Link":
@@ -59,7 +62,7 @@ def main():
     else:
         torrent_file = st.file_uploader("Upload Torrent File:")
         if torrent_file:
-            magnet_or_file = torrent_file.name
+            magnet_or_file = os.path.join(save_path, torrent_file.name)
             with open(magnet_or_file, "wb") as f:
                 f.write(torrent_file.getvalue())
 
