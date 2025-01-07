@@ -86,3 +86,6 @@ def main():
                 stream_video(torrent_handle, save_path)
         else:
             st.error("Please provide a valid input.")
+
+if __name__ == '__main__':
+    main()
