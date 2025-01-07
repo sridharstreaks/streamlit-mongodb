@@ -1,22 +1,16 @@
 import streamlit as st
-import subprocess
+import requests
+import time
 import os
 import tempfile
-import time
 
-def stream_torrent(torrent, torrent_type='magnet'):
-    # Create a temporary directory to store the torrent files
-    temp_dir = tempfile.mkdtemp()
-    
-    # Prepare the webtorrent command
-    if torrent_type == 'magnet':
-        command = ['webtorrent', torrent, '--out', temp_dir]
-    else:
-        command = ['webtorrent', torrent, '--out', temp_dir]
-
-    # Start the webtorrent process
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return process, temp_dir
+def download_torrent_file(magnet_link):
+    # Use webtorrent to download the video file from the magnet link
+    with tempfile.TemporaryDirectory() as temp_dir:
+        file_path = os.path.join(temp_dir, 'output.mp4')
+        command = f"webtorrent '{magnet_link}' --out '{temp_dir}' --dl-select 0"
+        os.system(command)
+        return file_path
 
 def generate_video_html(file_path):
     video_html = f"""
@@ -35,8 +29,9 @@ if option == 'Magnet Link':
     magnet_link = st.text_input('Enter Magnet Link')
     if st.button('Stream Video'):
         if magnet_link:
-            process, temp_dir = stream_torrent(magnet_link, 'magnet')
+            file_path = download_torrent_file(magnet_link)
             st.markdown('Streaming video...')
+            st.markdown(generate_video_html(file_path), unsafe_allow_html=True)
         else:
             st.error('Please enter a valid magnet link')
 
@@ -46,21 +41,9 @@ elif option == 'Torrent File':
         if torrent_file:
             with open('temp.torrent', 'wb') as f:
                 f.write(torrent_file.read())
-            process, temp_dir = stream_torrent('temp.torrent', 'file')
+            file_path = download_torrent_file('temp.torrent')
             st.markdown('Streaming video...')
+            st.markdown(generate_video_html(file_path), unsafe_allow_html=True)
             os.remove('temp.torrent')
         else:
             st.error('Please upload a valid torrent file')
-
-# Check if the video file is available to stream
-if 'process' in locals():
-    while True:
-        try:
-            video_files = [f for f in os.listdir(temp_dir) if f.endswith('.mp4')]
-            if video_files:
-                video_path = os.path.join(temp_dir, video_files[0])
-                st.markdown(generate_video_html(video_path), unsafe_allow_html=True)
-                break
-        except Exception as e:
-            pass
-        time.sleep(1)
