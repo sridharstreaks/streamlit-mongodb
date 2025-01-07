@@ -14,10 +14,7 @@ def stream_torrent(magnet_link, save_path="downloads"):
     # Add the magnet link to the session
     params = {
         "save_path": save_path,
-        "storage_mode": lt.storage_mode_t(2),
-        "paused": False,
-        "auto_managed": True,
-        "duplicate_is_error": True,
+        "storage_mode": lt.storage_mode_t.storage_mode_allocate,
     }
     handle = lt.add_magnet_uri(ses, magnet_link, params)
     st.write("Downloading metadata...")
