@@ -1,126 +1,69 @@
 import streamlit as st
 import libtorrent as lt
 import time
-import threading
 import os
-from pathlib import Path
-from flask import Flask, Response, send_file
-
-# Flask app for streaming video
-app = Flask(__name__)
-
-# Global variable to store the selected video file path
-video_file_path = None
-
-
-# Function to stream video chunks
-@app.route("/stream")
-def stream_video():
-    if video_file_path is None:
-        return "No video selected", 404
-    return send_file(video_file_path, mimetype="video/mp4")
-
-
-def start_flask_app():
-    app.run(host="0.0.0.0", port=8000)
-
-
-# Helper function to handle torrent streaming
-def stream_torrent(magnet_link, save_path="downloads"):
-    global video_file_path
-
-    # Initialize a session
-    ses = lt.session()
-    ses.listen_on(6881, 6891)
-
-    # Add the magnet link to the session
-    params = {
-        "save_path": save_path,
-        "storage_mode": lt.storage_mode_t.storage_mode_allocate,
-    }
-    handle = lt.add_magnet_uri(ses, magnet_link, params)
-    st.write("Downloading metadata...")
-
-    # Wait until metadata is downloaded
+# Set up a directory for temporary storage
+temp_dir = "temp_video"
+os.makedirs(temp_dir, exist_ok=True)
+# Initialize session state for libtorrent session and handle
+if "torrent_session" not in st.session_state:
+    st.session_state.torrent_session = lt.session()
+    st.session_state.torrent_handle = None
+def start_torrent_stream(magnet_link, save_path):
+    """Start streaming a torrent video."""
+    ses = st.session_state.torrent_session
+    ses.apply_settings({'listen_interfaces': '0.0.0.0:6881,[::]:6881'})
+    params = lt.add_torrent_params()
+    params.save_path = save_path
+    params.storage_mode = lt.storage_mode_t(2)
+    params.url = magnet_link
+    params.flags |= lt.torrent_flags.sequential_download  # Enable sequential download
+    handle = ses.add_torrent(params)
+    st.session_state.torrent_handle = handle
+    st.write("Downloading Metadata...")
     while not handle.has_metadata():
         time.sleep(1)
-        st.write("Waiting for metadata...")
-
-    st.write("Metadata downloaded!")
-    info = handle.get_torrent_info()
-    files = info.files()
-
-    # Extract file paths
-    file_paths = [files.file_path(i) for i in range(files.num_files())]
-
-    # Find the largest video file (or let the user pick)
-    video_files = [f for f in file_paths if f.endswith(('.mp4', '.mkv', '.avi'))]
-    if not video_files:
-        st.error("No video files found in this torrent.")
-        return None
-
-    st.write("Available video files:")
-    selected_file = st.selectbox("Select a video file:", video_files)
-
-    # Get the selected file's index and metadata
-    file_index = file_paths.index(selected_file)
-    file_offset = files.file_offset(file_index)
-    file_size = files.file_size(file_index)
-
-    st.write("Preparing to stream video...")
-    piece_length = info.piece_length()
-    first_piece = file_offset // piece_length
-    last_piece = (file_offset + file_size) // piece_length
-
-    # Prioritize pieces for the selected video file
-    for i in range(first_piece, last_piece + 1):
-        handle.piece_priority(i, 7)  # Set high priority for video pieces
-
-    # Wait until enough buffer is available
-    buffer_pieces = 10  # Number of pieces to buffer before playback
-    while sum(1 for i in range(first_piece, first_piece + buffer_pieces) if handle.have_piece(i)) < buffer_pieces:
+    st.write("Metadata Imported, Starting Stream...")
+    # Set priorities for the first few pieces (e.g., first 10%)
+    torrent_info = handle.torrent_file()
+    for i in range(min(10, torrent_info.num_pieces())):
+        handle.piece_priority(i, 7)  # 7 = highest priority
+def monitor_and_stream_video():
+    """Monitor download progress and stream video."""
+    handle = st.session_state.torrent_handle
+    if handle is None:
+        st.warning("No active stream. Start a new session.")
+        return
+    # Get the torrent info and save path
+    torrent_info = handle.torrent_file()
+    video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
+    while not os.path.exists(video_path) or not os.path.isfile(video_path):
         s = handle.status()
-        st.write(f"Buffering... {s.progress * 100:.2f}%")
-        time.sleep(1)
-
-    st.success("Buffering complete! Starting video stream...")
-    video_file_path = Path(save_path) / selected_file
-    return video_file_path
-
-
-
-# Streamlit Web App
-def main():
-    st.title("Torrent Video Streaming App")
-
-    # Input for Magnet Link
-    magnet_link = st.text_input("Enter the Magnet Link:")
-    if magnet_link:
-        st.write("Processing...")
-
-        # Temporary folder to save video
-        save_path = "downloads"
-        os.makedirs(save_path, exist_ok=True)
-
-        # Start torrent streaming
-        video_path = stream_torrent(magnet_link, save_path=save_path)
-
-        # Stream video using an embedded HTML5 video player
-        if video_path:
-            st.markdown(
-                f"""
-                <video width="700" controls autoplay>
-                    <source src="http://localhost:8000/stream" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                """,
-                unsafe_allow_html=True,
-            )
-
-
-# Start Flask in a separate thread
-flask_thread = threading.Thread(target=start_flask_app, daemon=True)
-flask_thread.start()
-
-if __name__ == "__main__":
-    main()
+        st.write(
+            f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
+            f"peers: {s.num_peers})"
+        )
+        time.sleep(5)
+    # Check if sufficient pieces are downloaded for streaming
+    piece_length = torrent_info.piece_length()
+    downloaded_bytes = handle.status().total_done
+    buffer_threshold = piece_length * 10  # Require at least 10 pieces for buffer
+    if downloaded_bytes >= buffer_threshold:
+        st.video(video_path)
+    else:
+        st.warning("Buffering... Please wait for more data to download.")
+# Streamlit UI
+st.title("Stream Torrent Video")
+magnet_link = st.text_input("Enter Magnet Link:")
+if magnet_link:
+    if st.button("Start Stream"):
+        st.write("Initializing stream...")
+        start_torrent_stream(magnet_link, temp_dir)
+if st.session_state.torrent_handle:
+    if st.button("Stream Video"):
+        monitor_and_stream_video()
+# Optional cleanup button to remove temporary files
+if st.button("Clear Temporary Files"):
+    for file in os.listdir(temp_dir):
+        os.remove(os.path.join(temp_dir, file))
+    st.success("Temporary files cleared.")
