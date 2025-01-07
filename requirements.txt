@@ -1,3 +1,4 @@
 libtorrent
 streamlit-player
 streamlit
+flask
