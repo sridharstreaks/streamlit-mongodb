@@ -11,7 +11,6 @@ def add_torrent(magnet_or_file, save_path):
     params = {
         'save_path': save_path,
         'storage_mode': lt.storage_mode_t.storage_mode_sparse,
-        'paused': False,
         'auto_managed': True,
         'duplicate_is_error': True,
     }
