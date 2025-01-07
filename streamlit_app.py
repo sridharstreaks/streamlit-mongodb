@@ -28,6 +28,7 @@ def start_flask_app():
 # Helper function to handle torrent streaming
 def stream_torrent(magnet_link, save_path="downloads"):
     global video_file_path
+
     # Initialize a session
     ses = lt.session()
     ses.listen_on(6881, 6891)
@@ -48,7 +49,9 @@ def stream_torrent(magnet_link, save_path="downloads"):
     st.write("Metadata downloaded!")
     info = handle.get_torrent_info()
     files = info.files()
-    file_paths = [f.path for f in files]
+
+    # Extract file paths
+    file_paths = [files.file_path(i) for i in range(files.num_files())]
 
     # Find the largest video file (or let the user pick)
     video_files = [f for f in file_paths if f.endswith(('.mp4', '.mkv', '.avi'))]
@@ -59,14 +62,12 @@ def stream_torrent(magnet_link, save_path="downloads"):
     st.write("Available video files:")
     selected_file = st.selectbox("Select a video file:", video_files)
 
-    # Start downloading the selected video file
+    # Get the selected file's index and metadata
     file_index = file_paths.index(selected_file)
-    file_entry = files[file_index]
+    file_offset = files.file_offset(file_index)
+    file_size = files.file_size(file_index)
 
     st.write("Preparing to stream video...")
-    file_offset = file_entry.offset
-    file_size = file_entry.size
-
     piece_length = info.piece_length()
     first_piece = file_offset // piece_length
     last_piece = (file_offset + file_size) // piece_length
@@ -85,6 +86,7 @@ def stream_torrent(magnet_link, save_path="downloads"):
     st.success("Buffering complete! Starting video stream...")
     video_file_path = Path(save_path) / selected_file
     return video_file_path
+
 
 
 # Streamlit Web App
