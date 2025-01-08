@@ -60,12 +60,6 @@ def monitor_and_stream_video():
         st.warning("Buffering... Please wait for more data to download.")
     else:
         st.video(video_path)
-        s = handle.status()
-        while s.progress<1:
-            progress_placeholder.write(
-                f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
-                f"seeds: {s.num_seeds}, peers: {s.num_peers})"
-            )
 
 # Streamlit UI
 st.title("Stream Torrent Video")
