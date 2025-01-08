@@ -58,10 +58,10 @@ def monitor_and_stream_video():
     while downloaded_bytes <= buffer_threshold:
         st.warning("Buffering... Please wait for more data to download.")
     else:
-        st.video(video_path)
-        s = handle.status()
         # Create placeholder for progress information
         progress_placeholder = st.empty()
+        st.video(video_path)
+        s = handle.status()
         # Simulate progress (replace this with your actual progress tracking)
         for i in range(101):
             # Update progress information
