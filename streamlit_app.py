@@ -26,12 +26,12 @@ def start_torrent_stream(magnet_link, save_path):
     st.write("Downloading Metadata...")
     while not handle.has_metadata():
         time.sleep(1)
-    st.write("Metadata Imported, Starting Stream...")
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
 
     for i in range(min(10, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
+    st.write("Metadata Imported, Starting Stream...")
 
 def monitor_and_stream_video():
     """Monitor download progress and stream video."""
