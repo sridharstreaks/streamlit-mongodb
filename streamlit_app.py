@@ -18,10 +18,6 @@ def start_torrent_stream(magnet_link, save_path):
     ses = st.session_state.torrent_session
     # Apply torrent session settings
     ses.apply_settings({'listen_interfaces': '0.0.0.0:6881,[::]:6881'})
-    ses.start_dht()  # Start DHT (Distributed Hash Table)
-    ses.set_download_rate_limit(0)  # No download rate limit
-    ses.set_upload_rate_limit(0)    # No upload rate limit
-    ses.set_max_connections(200)    # Set max connections
 
     # Prepare torrent parameters
     params = lt.add_torrent_params()
@@ -36,7 +32,7 @@ def start_torrent_stream(magnet_link, save_path):
     st.write("Downloading Metadata...")
 
     # Wait for metadata to be fetched
-    while not handle.has_metadata():
+    while not handle.status().has_metadata:
         time.sleep(1)
         
     # Set priorities for the first few pieces (e.g., first 25%)
