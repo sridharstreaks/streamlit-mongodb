@@ -65,13 +65,13 @@ def monitor_and_stream_video():
 
         if not buffer_ready:
             if downloaded_bytes < buffer_threshold:
-                buffer_placeholder.warning(f"Buffering... Please wait for {1-((downloaded_bytes/buffer_threshold)*100)}% more data to download.")
+                buffer_placeholder.warning(f"Buffering... Please wait for {round((downloaded_bytes/buffer_threshold)*100,2)}% more data to download.")
             else:
                 buffer_placeholder.empty()
                 buffer_ready = True
                 # Start video playback once buffer is ready
                 if os.path.exists(video_path) and os.path.isfile(video_path):
-                    video_placeholder.video(video_path)
+                    video_placeholder.video(video_path,autoplay=True)
 
         # Update progress
         progress_placeholder.write(
