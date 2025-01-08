@@ -65,7 +65,7 @@ def monitor_and_stream_video():
 
         if not buffer_ready:
             if downloaded_bytes < buffer_threshold:
-                buffer_placeholder.warning("Buffering... Please wait for more data to download.")
+                buffer_placeholder.warning(f"Buffering... Please wait for {1-((downloaded_bytes/buffer_threshold)*100)}% more data to download.")
             else:
                 buffer_placeholder.empty()
                 buffer_ready = True
