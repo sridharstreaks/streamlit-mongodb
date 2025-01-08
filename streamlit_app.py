@@ -71,6 +71,8 @@ def monitor_and_stream_video():
                 f"seeds: {s.num_seeds}, peers: {s.num_peers})"
             )
             time.sleep(5)
+        elif s.progress==1:
+            st.success('full video completed')
         st.video(video_path)
 
         # Clear progress information when done
