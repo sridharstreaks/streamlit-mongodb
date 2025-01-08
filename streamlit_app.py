@@ -52,11 +52,11 @@ def monitor_and_stream_video():
 
     # Check if sufficient pieces are downloaded for streaming
     piece_length = torrent_info.piece_length()
-    downloaded_bytes = handle.status().total_done
     buffer_threshold = piece_length * 10  # Require at least 10 pieces for buffer
     # Create placeholder for progress information
     progress_placeholder = st.empty()
     while downloaded_bytes <= buffer_threshold:
+        downloaded_bytes = handle.status().total_done
         progress_placeholder.warning("Buffering... Please wait for more data to download.")
         time.sleep(3)
     else:
