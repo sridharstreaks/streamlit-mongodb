@@ -30,7 +30,7 @@ def start_torrent_stream(magnet_link, save_path):
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
     
-    for i in range(min(max(10, ses.download_rate // (piece_length * 10)), torrent_info.num_pieces())):
+    for i in range(min(10, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
         
 def monitor_and_stream_video():
