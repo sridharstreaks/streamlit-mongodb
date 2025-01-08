@@ -103,9 +103,3 @@ if st.session_state.streaming:
 if st.button("Clear Temporary Files"):
     clear_temp_folder()
     st.success("Temporary files cleared.")
-
-# Clear temporary files when the session ends
-def on_session_end():
-    clear_temp_folder()
-
-st.on_event("shutdown", on_session_end)
