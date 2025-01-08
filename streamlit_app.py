@@ -54,10 +54,16 @@ def monitor_and_stream_video():
     piece_length = torrent_info.piece_length()
     downloaded_bytes = handle.status().total_done
     buffer_threshold = piece_length * 10  # Require at least 10 pieces for buffer
+    # Create placeholder for progress information
+    progress_placeholder = st.empty()
     while downloaded_bytes <= buffer_threshold:
         st.warning("Buffering... Please wait for more data to download.")
     else:
         st.video(video_path)
+        progress_placeholder.write(
+            f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
+            f"seeds: {s.num_seeds}, peers: {s.num_peers})"
+        )
 
 # Streamlit UI
 st.title("Stream Torrent Video")
@@ -68,8 +74,8 @@ if st.button("Start Stream") and magnet_link:
 if st.session_state.torrent_handle:
     if st.button("Stream Video"):
         monitor_and_stream_video()
-# Optional cleanup button to remove temporary files
-if st.button("Clear Temporary Files"):
-    for file in os.listdir(temp_dir):
-        os.remove(os.path.join(temp_dir, file))
-    st.success("Temporary files cleared.")
+    # Optional cleanup button to remove temporary files
+    if st.button("Clear Temporary Files"):
+        for file in os.listdir(temp_dir):
+            os.remove(os.path.join(temp_dir, file))
+        st.success("Temporary files cleared.")
