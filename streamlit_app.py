@@ -2,10 +2,19 @@ import streamlit as st
 import libtorrent as lt
 import time
 import os
+import shutil
 
 # Set up a directory for temporary storage
 temp_dir = "temp_video"
-os.makedirs(temp_dir, exist_ok=True)
+
+def clear_temp_folder():
+    """Clear all files in the temporary folder."""
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    os.makedirs(temp_dir, exist_ok=True)
+
+# Clear temporary files at the start of the session
+clear_temp_folder()
 
 # Initialize session state for libtorrent session and handle
 if "torrent_session" not in st.session_state:
@@ -92,6 +101,11 @@ if st.session_state.streaming:
 
 # Optional cleanup button to remove temporary files
 if st.button("Clear Temporary Files"):
-    for file in os.listdir(temp_dir):
-        os.remove(os.path.join(temp_dir, file))
+    clear_temp_folder()
     st.success("Temporary files cleared.")
+
+# Clear temporary files when the session ends
+def on_session_end():
+    clear_temp_folder()
+
+st.on_event("shutdown", on_session_end)
