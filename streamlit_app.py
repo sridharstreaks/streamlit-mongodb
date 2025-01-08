@@ -60,6 +60,8 @@ def monitor_and_stream_video():
         downloaded_bytes = handle.status().total_done
         progress_placeholder.warning("Buffering... Please wait for more data to download.")
         time.sleep(3)
+    # Clear progress information when done
+    progress_placeholder.empty()
     else:
         # Create placeholder for progress information
         progress_placeholder = st.empty()
