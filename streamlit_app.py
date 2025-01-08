@@ -18,7 +18,6 @@ def start_torrent_stream(magnet_link, save_path):
     ses = st.session_state.torrent_session
     ses.apply_settings({'listen_interfaces': '0.0.0.0:6881,[::]:6881'})
     ses.start_dht() #newly modified
-    ses.set_piece_hashing(True) #newly modified
     ses.set_download_rate_limit(0)  #newly modified
     ses.set_upload_rate_limit(0)    #newly modified
     ses.set_max_connections(200)  #newly modified
