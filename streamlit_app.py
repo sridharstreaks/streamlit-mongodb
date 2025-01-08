@@ -49,14 +49,12 @@ def monitor_and_stream_video():
     progress_placeholder = st.empty()  # Placeholder for progress information
     video_placeholder = st.empty()  # Placeholder for video playback
 
-    st.write(torrent_info.piece_length())
     buffer_threshold = torrent_info.piece_length() * 10  # Require at least 10 pieces for buffer
     buffer_ready = False
 
     while st.session_state.streaming:
         s = handle.status()
         downloaded_bytes = s.total_done
-        st.write(downloaded_bytes)
 
         if not buffer_ready:
             if downloaded_bytes < buffer_threshold:
