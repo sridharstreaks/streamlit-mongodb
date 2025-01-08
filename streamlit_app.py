@@ -59,7 +59,6 @@ def monitor_and_stream_video():
             if downloaded_bytes < buffer_threshold:
                 buffer_placeholder.warning("Buffering... Please wait for more data to download.")
             else:
-                st.write(torrent_info.total_size())
                 buffer_placeholder.empty()
                 buffer_ready = True
                 # Start video playback once buffer is ready
