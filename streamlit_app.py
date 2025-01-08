@@ -16,21 +16,29 @@ if "torrent_session" not in st.session_state:
 def start_torrent_stream(magnet_link, save_path):
     """Start streaming a torrent video."""
     ses = st.session_state.torrent_session
+    # Apply torrent session settings
     ses.apply_settings({'listen_interfaces': '0.0.0.0:6881,[::]:6881'})
-    ses.start_dht() #newly modified
-    ses.set_download_rate_limit(0)  #newly modified
-    ses.set_upload_rate_limit(0)    #newly modified
-    ses.set_max_connections(200)  #newly modified
+    ses.start_dht()  # Start DHT (Distributed Hash Table)
+    ses.set_download_rate_limit(0)  # No download rate limit
+    ses.set_upload_rate_limit(0)    # No upload rate limit
+    ses.set_max_connections(200)    # Set max connections
+
+    # Prepare torrent parameters
     params = lt.add_torrent_params()
     params.save_path = save_path
     params.storage_mode = lt.storage_mode_t(2)
     params.url = magnet_link
     params.flags |= lt.torrent_flags.sequential_download  # Enable sequential download
+
+    # Add torrent to session
     handle = ses.add_torrent(params)
     st.session_state.torrent_handle = handle
     st.write("Downloading Metadata...")
+
+    # Wait for metadata to be fetched
     while not handle.has_metadata():
         time.sleep(1)
+        
     # Set priorities for the first few pieces (e.g., first 25%)
     torrent_info = handle.torrent_file()
     for i in range(min(25, torrent_info.num_pieces())):
