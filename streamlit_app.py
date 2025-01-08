@@ -48,7 +48,7 @@ def monitor_and_stream_video():
     progress_placeholder = st.empty()  # Placeholder for progress information
     video_placeholder = st.empty()  # Placeholder for video playback
 
-    buffer_threshold = torrent_info.total_size() * (5/100)  # Require at least 5% for buffer
+    buffer_threshold = torrent_info.total_size() * (10/100)  # Require at least 5% for buffer
     buffer_ready = False
     
     while st.session_state.streaming:
