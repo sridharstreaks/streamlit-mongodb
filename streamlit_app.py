@@ -36,6 +36,7 @@ def monitor_and_stream_video():
         return
     # Get the torrent info and save path
     torrent_info = handle.torrent_file()
+    st.write(torrent_info)
     video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
     while not os.path.exists(video_path) or not os.path.isfile(video_path):
         s = handle.status()
