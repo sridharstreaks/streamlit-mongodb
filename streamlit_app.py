@@ -11,6 +11,7 @@ os.makedirs(temp_dir, exist_ok=True)
 if "torrent_session" not in st.session_state:
     st.session_state.torrent_session = lt.session()
     st.session_state.torrent_handle = None
+    st.session_state.streaming = False  # To track if the video is being streamed
 
 def start_torrent_stream(magnet_link, save_path):
     """Start streaming a torrent video."""
@@ -32,6 +33,7 @@ def start_torrent_stream(magnet_link, save_path):
     for i in range(min(10, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
     st.write("Metadata Imported, Starting Stream...")
+    st.session_state.streaming = True  # Set streaming flag to True
 
 def monitor_and_stream_video():
     """Monitor download progress and stream video."""
@@ -39,58 +41,49 @@ def monitor_and_stream_video():
     if handle is None:
         st.warning("No active stream. Start a new session.")
         return
+
     # Get the torrent info and save path
     torrent_info = handle.torrent_file()
     video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
-    while not os.path.exists(video_path) or not os.path.isfile(video_path):
-        s = handle.status()
-        st.write(
-            f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
-            f"peers: {s.num_peers})"
-        )
-        time.sleep(5)
+    buffer_placeholder = st.empty()  # Placeholder for buffering message
+    progress_placeholder = st.empty()  # Placeholder for progress information
 
-    # Check if sufficient pieces are downloaded for streaming
-    piece_length = torrent_info.piece_length()
-    downloaded_bytes=0
-    buffer_threshold = piece_length * 10  # Require at least 10 pieces for buffer
-    # Create placeholder for progress information
-    buffer_placeholder = st.empty()
-    while downloaded_bytes <= buffer_threshold:
-        downloaded_bytes = handle.status().total_done
-        buffer_placeholder.warning("Buffering... Please wait for more data to download.")
-        time.sleep(3)
-    else:
-        buffer_placeholder.empty()
-        # Create placeholder for progress information
-        progress_placeholder = st.empty()
+    while st.session_state.streaming:
         s = handle.status()
-        while True:
-            if s.progress<1:
-                progress_placeholder.write(
-                    f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
-                    f"seeds: {s.num_seeds}, peers: {s.num_peers})"
-                )
-                time.sleep(5)
-            else:
-                st.success('full video completed')
+        downloaded_bytes = s.total_done
+        buffer_threshold = torrent_info.piece_length() * 10  # Require at least 10 pieces for buffer
+
+        if downloaded_bytes < buffer_threshold:
+            buffer_placeholder.warning("Buffering... Please wait for more data to download.")
+        else:
+            buffer_placeholder.empty()
+            progress_placeholder.write(
+                f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
+                f"seeds: {s.num_seeds}, peers: {s.num_peers})"
+            )
+            if s.progress >= 1:
+                st.success("Full video download completed.")
+                st.session_state.streaming = False
                 break
+        time.sleep(2)  # Reduce the polling frequency to avoid unnecessary reruns
+
+    # Once streaming is done, show the video
+    if os.path.exists(video_path) and os.path.isfile(video_path):
         st.video(video_path)
 
-        # Clear progress information when done
-        progress_placeholder.empty()
-        
 # Streamlit UI
 st.title("Stream Torrent Video")
 magnet_link = st.text_input("Enter Magnet Link:")
+
 if st.button("Start Stream") and magnet_link:
     st.write("Initializing stream...")
     start_torrent_stream(magnet_link, temp_dir)
-if st.session_state.torrent_handle:
-    if st.button("Stream Video"):
-        monitor_and_stream_video()
-    # Optional cleanup button to remove temporary files
-    if st.button("Clear Temporary Files"):
-        for file in os.listdir(temp_dir):
-            os.remove(os.path.join(temp_dir, file))
-        st.success("Temporary files cleared.")
+
+if st.session_state.streaming:
+    monitor_and_stream_video()
+
+# Optional cleanup button to remove temporary files
+if st.button("Clear Temporary Files"):
+    for file in os.listdir(temp_dir):
+        os.remove(os.path.join(temp_dir, file))
+    st.success("Temporary files cleared.")
