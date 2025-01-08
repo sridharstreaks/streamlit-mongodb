@@ -21,7 +21,6 @@ def start_torrent_stream(magnet_link, save_path):
     ses.set_download_rate_limit(0)  #newly modified
     ses.set_upload_rate_limit(0)    #newly modified
     ses.set_max_connections(200)  #newly modified
-    ses.set_cache_size(16 * 1024 * 1024)  #newly modified
     params = lt.add_torrent_params()
     params.save_path = save_path
     params.storage_mode = lt.storage_mode_t(2)
