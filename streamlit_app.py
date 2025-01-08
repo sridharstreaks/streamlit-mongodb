@@ -55,14 +55,13 @@ def monitor_and_stream_video():
     downloaded_bytes=0
     buffer_threshold = piece_length * 10  # Require at least 10 pieces for buffer
     # Create placeholder for progress information
-    progress_placeholder = st.empty()
+    buffer_placeholder = st.empty()
     while downloaded_bytes <= buffer_threshold:
         downloaded_bytes = handle.status().total_done
-        progress_placeholder.warning("Buffering... Please wait for more data to download.")
+        buffer_placeholder.warning("Buffering... Please wait for more data to download.")
         time.sleep(3)
-    # Clear progress information when done
-    progress_placeholder.empty()
     else:
+        buffer_placeholder.empty()
         # Create placeholder for progress information
         progress_placeholder = st.empty()
         s = handle.status()
