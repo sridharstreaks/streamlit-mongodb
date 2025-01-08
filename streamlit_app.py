@@ -47,29 +47,37 @@ def monitor_and_stream_video():
     video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
     buffer_placeholder = st.empty()  # Placeholder for buffering message
     progress_placeholder = st.empty()  # Placeholder for progress information
+    video_placeholder = st.empty()  # Placeholder for video playback
+
+    buffer_threshold = torrent_info.piece_length() * 10  # Require at least 10 pieces for buffer
+    buffer_ready = False
 
     while st.session_state.streaming:
         s = handle.status()
         downloaded_bytes = s.total_done
-        buffer_threshold = torrent_info.piece_length() * 10  # Require at least 10 pieces for buffer
 
-        if downloaded_bytes < buffer_threshold:
-            buffer_placeholder.warning("Buffering... Please wait for more data to download.")
-        else:
-            buffer_placeholder.empty()
-            progress_placeholder.write(
-                f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
-                f"seeds: {s.num_seeds}, peers: {s.num_peers})"
-            )
-            if s.progress >= 1:
-                st.success("Full video download completed.")
-                st.session_state.streaming = False
-                break
+        if not buffer_ready:
+            if downloaded_bytes < buffer_threshold:
+                buffer_placeholder.warning("Buffering... Please wait for more data to download.")
+            else:
+                buffer_placeholder.empty()
+                buffer_ready = True
+                # Start video playback once buffer is ready
+                if os.path.exists(video_path) and os.path.isfile(video_path):
+                    video_placeholder.video(video_path)
+
+        # Update progress
+        progress_placeholder.write(
+            f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
+            f"seeds: {s.num_seeds}, peers: {s.num_peers})"
+        )
+
+        if s.progress >= 1:  # Check if download is complete
+            st.success("Full video download completed.")
+            st.session_state.streaming = False
+            break
+
         time.sleep(2)  # Reduce the polling frequency to avoid unnecessary reruns
-
-    # Once streaming is done, show the video
-    if os.path.exists(video_path) and os.path.isfile(video_path):
-        st.video(video_path)
 
 # Streamlit UI
 st.title("Stream Torrent Video")
