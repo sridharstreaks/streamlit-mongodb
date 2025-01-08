@@ -81,12 +81,12 @@ def monitor_and_stream_video():
 
             # Provide download option once download is complete
             if os.path.exists(video_path) and os.path.isfile(video_path):
-                if not st.session_state.download_clicked:  # Avoid download button triggering rerun
+                with st.container():
+                    st.write("Clicking on download will stop the video. Click Start Stream to play video Again")
                     st.download_button(
                         label="Download Video",
                         data=open(video_path, "rb").read(),
                         file_name=os.path.basename(video_path),
-                        on_click=lambda: st.session_state.update({"download_clicked": True}),
                     )
                 
             break
