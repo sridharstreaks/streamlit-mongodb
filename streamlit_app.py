@@ -14,14 +14,13 @@ def download_torrent(magnet_link, torrent_file):
     params = {
         'save_path': tempfile.mkdtemp(),
         'storage_mode': lt.storage_mode_t.storage_mode_sparse,
-        'ti': None
     }
 
     if magnet_link:
         handle = lt.add_magnet_uri(session, magnet_link, params)
     elif torrent_file:
         info = lt.torrent_info(torrent_file)
-        handle = session.add_torrent({'ti': info, 'save_path': params['save_path']})
+        handle = session.add_torrent({'save_path': params['save_path']})
 
     st.write("Downloading torrent...")
     while not handle.has_metadata():
