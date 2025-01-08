@@ -68,8 +68,8 @@ def monitor_and_stream_video():
 
         # Update progress
         progress_placeholder.write(
-            f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, up: {s.upload_rate / 1000:.1f} kB/s"
-            f"seeds: {s.num_seeds}, peers: {s.num_peers})"
+            f"Progress: {s.progress * 100:.2f}% (Down: {s.download_rate / 1000:.1f} kB/s, Up: {s.upload_rate / 1000:.1f} kB/s"
+            f", Seeds: {s.num_seeds}, Peers: {s.num_peers})"
         )
 
         if s.progress >= 1:  # Check if download is complete
