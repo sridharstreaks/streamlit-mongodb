@@ -50,8 +50,7 @@ def monitor_and_stream_video():
 
     buffer_threshold = torrent_info.piece_length() * 10  # Require at least 10 pieces for buffer
     buffer_ready = False
-    st.write(torrent_info.piece_length())
-    st.write(torrent_info.num_pieces())
+    
     while st.session_state.streaming:
         s = handle.status()
         downloaded_bytes = s.total_done
