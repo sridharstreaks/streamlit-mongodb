@@ -29,7 +29,7 @@ def start_torrent_stream(magnet_link, save_path):
     st.write("Metadata Imported, Starting Stream...")
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
-    st.write(torrent_info.name)
+    st.write(torrent_info.name())
     
     for i in range(min(10, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
@@ -42,7 +42,7 @@ def monitor_and_stream_video():
         return
     # Get the torrent info and save path
     torrent_info = handle.torrent_file()
-    st.write(torrent_info.name)
+    st.write(torrent_info.name())
     video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
     while not os.path.exists(video_path) or not os.path.isfile(video_path):
         s = handle.status()
