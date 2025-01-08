@@ -63,7 +63,6 @@ def monitor_and_stream_video():
     else:
         # Create placeholder for progress information
         progress_placeholder = st.empty()
-        st.video(video_path)
         s = handle.status()
         while s.progress<1:
             progress_placeholder.write(
@@ -71,6 +70,7 @@ def monitor_and_stream_video():
                 f"seeds: {s.num_seeds}, peers: {s.num_peers})"
             )
             time.sleep(5)
+        st.video(video_path)
 
         # Clear progress information when done
         progress_placeholder.empty()
