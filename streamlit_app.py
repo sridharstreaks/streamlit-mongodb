@@ -75,13 +75,19 @@ def monitor_and_stream_video():
             st.success("Full video download completed.")
             st.session_state.streaming = False
 
+            # Add session state to track the download button
+            if 'download_clicked' not in st.session_state:
+                st.session_state.download_clicked = False
+
             # Provide download option once download is complete
             if os.path.exists(video_path) and os.path.isfile(video_path):
-                st.download_button(
-                    label="Download Video",
-                    data=open(video_path, "rb").read(),
-                    file_name=os.path.basename(video_path)
-                )
+                if not st.session_state.download_clicked:  # Avoid download button triggering rerun
+                    st.download_button(
+                        label="Download Video",
+                        data=open(video_path, "rb").read(),
+                        file_name=os.path.basename(video_path),
+                        on_click=lambda: st.session_state.update({"download_clicked": True}),
+                    )
                 
             break
 
