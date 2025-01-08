@@ -17,6 +17,7 @@ def start_torrent_stream(magnet_link, save_path):
     """Start streaming a torrent video."""
     ses = st.session_state.torrent_session
     ses.apply_settings({'listen_interfaces': '0.0.0.0:6881,[::]:6881'})
+    ses.start_dht()
     params = lt.add_torrent_params()
     params.save_path = save_path
     params.storage_mode = lt.storage_mode_t(2)
