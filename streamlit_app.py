@@ -90,8 +90,8 @@ if st.button("Start Stream") and magnet_link:
 if st.session_state.streaming:
     monitor_and_stream_video()
 
-# Optional cleanup button to remove temporary files
-if st.button("Clear Temporary Files"):
-    for file in os.listdir(temp_dir):
-        os.remove(os.path.join(temp_dir, file))
-    st.success("Temporary files cleared.")
+    # Optional cleanup button to remove temporary files
+    if st.button("Reset"):
+        for file in os.listdir(temp_dir):
+            os.remove(os.path.join(temp_dir, file))
+        st.success("Temporary files cleared.")
