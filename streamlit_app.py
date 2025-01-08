@@ -29,7 +29,7 @@ def start_torrent_stream(magnet_link, save_path):
         time.sleep(1)
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
-
+    st.write(torrent_info.num_pieces())
     for i in range(min(25, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
     st.write("Metadata Imported, Starting Stream...")
