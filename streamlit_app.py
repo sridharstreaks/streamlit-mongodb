@@ -30,7 +30,7 @@ def start_torrent_stream(magnet_link, save_path):
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
     
-    for i in range(min(10, torrent_info.num_pieces())):
+    for i in range(min(max(10, s.download_rate // (piece_length * 10)), torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
         
 def monitor_and_stream_video():
@@ -42,13 +42,15 @@ def monitor_and_stream_video():
     # Get the torrent info and save path
     torrent_info = handle.torrent_file()
     video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
+    progress_bar = st.progress(0)
     while not os.path.exists(video_path) or not os.path.isfile(video_path):
         s = handle.status()
+        progress_bar.progress(s.progress)
         st.write(
             f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
             f"peers: {s.num_peers})"
         )
-        time.sleep(5)
+        time.sleep(1)
         
     # Check if sufficient pieces are downloaded for streaming
     piece_length = torrent_info.piece_length()
@@ -57,7 +59,7 @@ def monitor_and_stream_video():
     if downloaded_bytes >= buffer_threshold:
         st.video(video_path)
     else:
-        st.warning("Buffering... Please wait for more data to download.")
+        st.warning(f"Buffering... {downloaded_bytes / piece_length}/{buffer_threshold / piece_length} pieces downloaded.")
         
 # Streamlit UI
 st.title("Stream Torrent Video")
