@@ -26,12 +26,13 @@ def start_torrent_stream(magnet_link, save_path):
     st.write("Downloading Metadata...")
     while not handle.has_metadata():
         time.sleep(1)
-    st.write("Metadata Imported, Starting Stream...")
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
 
     for i in range(min(10, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
+    st.write("Metadata Imported, Click to start stream...")
+    
 
 def monitor_and_stream_video():
     """Monitor download progress and stream video."""
@@ -52,12 +53,14 @@ def monitor_and_stream_video():
 
     # Check if sufficient pieces are downloaded for streaming
     piece_length = torrent_info.piece_length()
+    st.write(piece_length)
     downloaded_bytes = handle.status().total_done
+    st.write(downloaded_bytes)
     buffer_threshold = piece_length * 10  # Require at least 10 pieces for buffer
+    while downloaded_bytes <= buffer_threshold:
+        st.warning("Buffering... Please wait for more data to download.")
     if downloaded_bytes >= buffer_threshold:
         st.video(video_path)
-    else:
-        st.warning("Buffering... Please wait for more data to download.")
 
 # Streamlit UI
 st.title("Stream Torrent Video")
