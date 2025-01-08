@@ -122,6 +122,8 @@ if st.session_state.streaming:
         for file in os.listdir(temp_dir):
             os.remove(os.path.join(temp_dir, file))
 
+        st.session_state.clear() 
+        
         # Reset torrent session and clear session state
         st.session_state.torrent_session = lt.session()  # Re-initialize session
         st.session_state.torrent_handle = None
