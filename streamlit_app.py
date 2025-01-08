@@ -9,32 +9,32 @@ def download_torrent_sequentially(magnet_link, torrent_file, file_ready_callback
     """
     Download the torrent sequentially and trigger the callback once enough pieces are ready.
     """
-    session = lt.session()
-    session.listen_on(6881, 6891)
+    session = lt.session({'listen_interfaces': '0.0.0.0:6881'})
 
+    # Torrent parameters
     params = {
         'save_path': tempfile.mkdtemp(),
-        'storage_mode': lt.storage_mode_t.storage_mode_sparse
+        'storage_mode': lt.storage_mode_t.storage_mode_sparse,
     }
 
-    # Add the torrent (magnet link or file)
     if magnet_link:
         handle = lt.add_magnet_uri(session, magnet_link, params)
     elif torrent_file:
         info = lt.torrent_info(torrent_file)
-        handle = session.add_torrent({'save_path': params['save_path']})
+        params['ti'] = info
+        handle = session.add_torrent(params)
 
     # Enable sequential downloading
-    handle.set_sequential_download(True)
+    handle.set_flags(lt.torrent_flags.sequential_download)
 
-    # Wait until metadata is downloaded
+    # Wait for metadata to download
     st.write("Downloading metadata...")
     while not handle.has_metadata():
         time.sleep(1)
 
+    # Get the file list and prepare the file path
     torrent_info = handle.get_torrent_info()
-    files = torrent_info.files()
-    file_path = os.path.join(params['save_path'], files[0].path)
+    file_path = os.path.join(params['save_path'], torrent_info.files().file_path(0))
 
     st.write("Starting sequential download...")
     while handle.status().state != lt.torrent_status.seeding:
