@@ -14,8 +14,7 @@ def download_torrent_sequentially(magnet_link, torrent_file, file_ready_callback
 
     params = {
         'save_path': tempfile.mkdtemp(),
-        'storage_mode': lt.storage_mode_t.storage_mode_sparse,
-        'ti': None
+        'storage_mode': lt.storage_mode_t.storage_mode_sparse
     }
 
     # Add the torrent (magnet link or file)
@@ -23,7 +22,7 @@ def download_torrent_sequentially(magnet_link, torrent_file, file_ready_callback
         handle = lt.add_magnet_uri(session, magnet_link, params)
     elif torrent_file:
         info = lt.torrent_info(torrent_file)
-        handle = session.add_torrent({'ti': info, 'save_path': params['save_path']})
+        handle = session.add_torrent({'save_path': params['save_path']})
 
     # Enable sequential downloading
     handle.set_sequential_download(True)
