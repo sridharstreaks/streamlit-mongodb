@@ -2,13 +2,16 @@ import streamlit as st
 import libtorrent as lt
 import time
 import os
+
 # Set up a directory for temporary storage
 temp_dir = "temp_video"
 os.makedirs(temp_dir, exist_ok=True)
+
 # Initialize session state for libtorrent session and handle
 if "torrent_session" not in st.session_state:
     st.session_state.torrent_session = lt.session()
     st.session_state.torrent_handle = None
+    
 def start_torrent_stream(magnet_link, save_path):
     """Start streaming a torrent video."""
     ses = st.session_state.torrent_session
@@ -24,11 +27,13 @@ def start_torrent_stream(magnet_link, save_path):
     while not handle.has_metadata():
         time.sleep(1)
     st.write("Metadata Imported, Starting Stream...")
-    st.write(torrent_info)
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
+    st.write(torrent_info)
+    
     for i in range(min(10, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
+        
 def monitor_and_stream_video():
     """Monitor download progress and stream video."""
     handle = st.session_state.torrent_handle
@@ -37,6 +42,7 @@ def monitor_and_stream_video():
         return
     # Get the torrent info and save path
     torrent_info = handle.torrent_file()
+    st.write(torrent_info)
     video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
     while not os.path.exists(video_path) or not os.path.isfile(video_path):
         s = handle.status()
@@ -45,6 +51,7 @@ def monitor_and_stream_video():
             f"peers: {s.num_peers})"
         )
         time.sleep(5)
+        
     # Check if sufficient pieces are downloaded for streaming
     piece_length = torrent_info.piece_length()
     downloaded_bytes = handle.status().total_done
@@ -53,6 +60,7 @@ def monitor_and_stream_video():
         st.video(video_path)
     else:
         st.warning("Buffering... Please wait for more data to download.")
+        
 # Streamlit UI
 st.title("Stream Torrent Video")
 magnet_link = st.text_input("Enter Magnet Link:")
