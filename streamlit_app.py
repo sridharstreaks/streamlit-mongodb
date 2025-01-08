@@ -71,8 +71,9 @@ def monitor_and_stream_video():
             st.progress(i)
             time.sleep(1)
 
-# Clear progress information when done
-progress_placeholder.empty()
+        # Clear progress information when done
+        progress_placeholder.empty()
+        
 # Streamlit UI
 st.title("Stream Torrent Video")
 magnet_link = st.text_input("Enter Magnet Link:")
