@@ -3,11 +3,6 @@ import libtorrent as lt
 import time
 import os
 
-if os.path.exists("temp_video"):
-    for file in os.listdir("temp_video"):
-        os.remove(os.path.join("temp_video", file))
-    st.write("Temporary files cleared.")
-
 # Set up a directory for temporary storage
 temp_dir = "temp_video"
 os.makedirs(temp_dir, exist_ok=True)
