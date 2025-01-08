@@ -30,7 +30,7 @@ def start_torrent_stream(magnet_link, save_path):
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
 
-    for i in range(min(10, torrent_info.num_pieces())):
+    for i in range(min(25, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
     st.write("Metadata Imported, Starting Stream...")
     st.session_state.streaming = True  # Set streaming flag to True
@@ -49,6 +49,7 @@ def monitor_and_stream_video():
     progress_placeholder = st.empty()  # Placeholder for progress information
     video_placeholder = st.empty()  # Placeholder for video playback
 
+    st.write(torrent_info.piece_length())
     buffer_threshold = torrent_info.piece_length() * 10  # Require at least 10 pieces for buffer
     buffer_ready = False
 
