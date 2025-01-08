@@ -62,12 +62,17 @@ def monitor_and_stream_video():
         s = handle.status()
         # Create placeholder for progress information
         progress_placeholder = st.empty()
-        while s.progress<1:
+        # Simulate progress (replace this with your actual progress tracking)
+        for i in range(101):
+            # Update progress information
             progress_placeholder.write(
-                f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
-                f"seeds: {s.num_seeds}, peers: {s.num_peers})"
+                f"Progress: {i:.2f}% (down: {i*10:.1f} kB/s, peers: {i%10})"
             )
+            st.progress(i)
+            time.sleep(1)
 
+# Clear progress information when done
+progress_placeholder.empty()
 # Streamlit UI
 st.title("Stream Torrent Video")
 magnet_link = st.text_input("Enter Magnet Link:")
