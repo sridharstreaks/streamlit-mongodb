@@ -74,6 +74,15 @@ def monitor_and_stream_video():
         if s.progress >= 1:  # Check if download is complete
             st.success("Full video download completed.")
             st.session_state.streaming = False
+
+            # Provide download option once download is complete
+            if os.path.exists(video_path) and os.path.isfile(video_path):
+                st.download_button(
+                    label="Download Video",
+                    data=open(video_path, "rb").read(),
+                    file_name=os.path.basename(video_path)
+                )
+                
             break
 
         time.sleep(2)  # Reduce the polling frequency to avoid unnecessary reruns
