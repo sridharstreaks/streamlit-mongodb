@@ -64,11 +64,12 @@ def monitor_and_stream_video():
         progress_placeholder = st.empty()
         st.video(video_path)
         s = handle.status()
-        progress_placeholder.write(
-            f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
-            f"seeds: {s.num_seeds}, peers: {s.num_peers})"
-        )
-        time.sleep(5)
+        while s.progress<1:
+            progress_placeholder.write(
+                f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
+                f"seeds: {s.num_seeds}, peers: {s.num_peers})"
+            )
+            time.sleep(5)
 
         # Clear progress information when done
         progress_placeholder.empty()
