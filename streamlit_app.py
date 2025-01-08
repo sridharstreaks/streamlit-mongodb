@@ -54,23 +54,10 @@ def monitor_and_stream_video():
     piece_length = torrent_info.piece_length()
     downloaded_bytes = handle.status().total_done
     buffer_threshold = piece_length * 10  # Require at least 10 pieces for buffer
-    while True:
-        downloaded_bytes = handle.status().total_done
-        if downloaded_bytes >= buffer_threshold:
-            st.video(video_path)
-            break
-        else:
-            st.warning("Buffering... Please wait for more data to download.")
-        time.sleep(5)
-
-    # Continuously update the progress while the video is playing
-    while handle.status().state != lt.torrent_status.seeding:
-        s = handle.status()
-        st.write(
-            f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
-            f"peers: {s.num_peers})"
-        )
-        time.sleep(5)
+    if downloaded_bytes >= buffer_threshold:
+        st.video(video_path)
+    else:
+        st.warning("Buffering... Please wait for more data to download.")
 
 # Streamlit UI
 st.title("Stream Torrent Video")
