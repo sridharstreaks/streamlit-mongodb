@@ -118,7 +118,15 @@ if st.session_state.streaming:
 
     # Optional cleanup button to remove temporary files
     if st.button("Reset"):
+         # Clear temp files
         for file in os.listdir(temp_dir):
             os.remove(os.path.join(temp_dir, file))
-        st.success("Temporary files cleared.")
-        st.rerun
+
+        # Reset torrent session and clear session state
+        st.session_state.torrent_session = lt.session()  # Re-initialize session
+        st.session_state.torrent_handle = None
+        st.session_state.streaming = False  # Stop the stream
+        
+        # Clear the progress-related data
+        st.write("Temporary files cleared and torrent session reset.")
+        st.rerun()  # Restart the Streamlit app
