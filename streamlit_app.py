@@ -56,6 +56,7 @@ def monitor_and_stream_video():
     while st.session_state.streaming:
         s = handle.status()
         downloaded_bytes = s.total_done
+        st.write(downloaded_bytes)
 
         if not buffer_ready:
             if downloaded_bytes < buffer_threshold:
