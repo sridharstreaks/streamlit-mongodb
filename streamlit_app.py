@@ -11,7 +11,7 @@ os.makedirs(temp_dir, exist_ok=True)
 if "torrent_session" not in st.session_state:
     st.session_state.torrent_session = lt.session()
     st.session_state.torrent_handle = None
-    
+
 def start_torrent_stream(magnet_link, save_path):
     """Start streaming a torrent video."""
     ses = st.session_state.torrent_session
@@ -29,10 +29,10 @@ def start_torrent_stream(magnet_link, save_path):
     st.write("Metadata Imported, Starting Stream...")
     # Set priorities for the first few pieces (e.g., first 10%)
     torrent_info = handle.torrent_file()
-    
+
     for i in range(min(10, torrent_info.num_pieces())):
         handle.piece_priority(i, 7)  # 7 = highest priority
-        
+
 def monitor_and_stream_video():
     """Monitor download progress and stream video."""
     handle = st.session_state.torrent_handle
@@ -42,16 +42,14 @@ def monitor_and_stream_video():
     # Get the torrent info and save path
     torrent_info = handle.torrent_file()
     video_path = os.path.join(temp_dir, torrent_info.files().file_path(0))  # Get the first file in the torrent
-    progress_bar = st.progress(0)
     while not os.path.exists(video_path) or not os.path.isfile(video_path):
         s = handle.status()
-        progress_bar.progress(s.progress)
         st.write(
             f"Progress: {s.progress * 100:.2f}% (down: {s.download_rate / 1000:.1f} kB/s, "
             f"peers: {s.num_peers})"
         )
-        time.sleep(1)
-        
+        time.sleep(5)
+
     # Check if sufficient pieces are downloaded for streaming
     piece_length = torrent_info.piece_length()
     downloaded_bytes = handle.status().total_done
@@ -59,15 +57,14 @@ def monitor_and_stream_video():
     if downloaded_bytes >= buffer_threshold:
         st.video(video_path)
     else:
-        st.warning(f"Buffering... {downloaded_bytes / piece_length}/{buffer_threshold / piece_length} pieces downloaded.")
-        
+        st.warning("Buffering... Please wait for more data to download.")
+
 # Streamlit UI
 st.title("Stream Torrent Video")
 magnet_link = st.text_input("Enter Magnet Link:")
-if magnet_link:
-    if st.button("Start Stream"):
-        st.write("Initializing stream...")
-        start_torrent_stream(magnet_link, temp_dir)
+if st.button("Start Stream") and magnet_link:
+    st.write("Initializing stream...")
+    start_torrent_stream(magnet_link, temp_dir)
 if st.session_state.torrent_handle:
     if st.button("Stream Video"):
         monitor_and_stream_video()
